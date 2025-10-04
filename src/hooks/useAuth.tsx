@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase'; // Corrigido para usar o alias
+import { supabase } from '@/lib/supabase'; // Usando o alias para robustez
 import { Session, User, AuthError } from '@supabase/supabase-js';
 
+// Definimos o tipo para o contexto de autenticação
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -11,76 +12,106 @@ interface AuthContextType {
   signOut: () => Promise<{ error: AuthError | null }>;
 }
 
+// Criamos o contexto
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Criamos o provedor (Provider) que irá envolver a nossa aplicação
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
 
+  // Função auxiliar para buscar a role
+  const fetchUserRole = async (userId: string) => {
+    try {
+      // Busca a role na tabela 'profiles', que é onde o trigger a armazena
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 é 'Não encontrado' - esperado para novos usuários
+          throw error;
+      }
+      return profile ? profile.role as string : null;
+    } catch (error) {
+      console.error("Erro ao buscar a role do utilizador:", error);
+      return null;
+    }
+  }
+
+  // Efeito principal para checar a sessão inicial e configurar o listener
   useEffect(() => {
-    const getSessionAndRole = async () => {
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+    // Função para buscar os dados da sessão inicial de forma ROBUSTA
+    const getInitialSession = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            setSession(session);
+            setUser(session?.user ?? null);
 
-      if (error) {
-        console.error("Erro ao buscar sessão:", error);
-        setLoading(false);
-        return;
-      }
+            if (session?.user) {
+              const userRole = await fetchUserRole(session.user.id);
+              setRole(userRole);
+            }
 
-      setSession(currentSession);
-      const currentUser = currentSession?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        console.log('Buscando Role para o usuário...'); // Log para auditoria
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
-        setRole(profile?.role || null);
-      }
-
-      setLoading(false);
+        } catch (error) {
+            console.error("Erro fatal ao carregar a sessão inicial:", error);
+        } finally {
+            // ESSENCIAL: Garante que o loading é SEMPRE desativado
+            setLoading(false); 
+        }
     };
 
-    getSessionAndRole();
+    getInitialSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      setSession(newSession);
-      const newUser = newSession?.user ?? null;
-      setUser(newUser);
-
-      if (newUser) {
-        console.log('Buscando Role (onAuthStateChange)...'); // Log para auditoria
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', newUser.id).single();
-        setRole(profile?.role || null);
-      } else {
-        setRole(null);
+    // Ouvinte para mudanças no estado de autenticação (login, logout)
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const userRole = await fetchUserRole(session.user.id);
+          setRole(userRole);
+        } else {
+          setRole(null);
+        }
       }
-      
-      // O loading só deve ser alterado no carregamento inicial
-      if (loading) setLoading(false);
-    });
+    );
 
+    // Limpeza do ouvinte quando o componente for desmontado
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []); // Dependência vazia está correta
+  }, []); // Roda apenas na montagem
 
+  // Função de login
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     return { user: data.user, error };
   };
 
+  // Função de logout
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
   };
 
-  const value = { user, session, loading, role, signIn, signOut };
+  const value = {
+    user,
+    session,
+    loading,
+    role,
+    signIn,
+    signOut,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// Hook customizado para usar o contexto de autenticação
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
