@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/hooks/useauth.tsx","./src/lib/supabase.ts","./src/pages/register.tsx","./src/pages/provider/professionalprofile.tsx"],"version":"5.8.3"}
