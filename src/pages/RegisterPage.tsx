@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
-// O caminho foi ajustado para relativo para garantir a resolução correta do arquivo.
-import { supabase } from '@/lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/lib/supabase'; // Importação do Supabase
+import { Eye, EyeOff, User, Mail, Lock, Phone, FileText, Briefcase, MapPin } from 'lucide-react'; 
+// Assumindo que você tem um componente Input, o useAuth não é usado para signUp
+import { Input } from '@/components/Input'; 
+// Não importamos useAuth para o signUp, usamos o supabase direto
 
 // Interface atualizada para incluir os novos campos
 interface PrestadorFormData {
   email: string;
   password: string;
-  confirmPassword: string; // Adicionado para validação
-  nome_completo: string; // Corrigido de 'name' para 'nome_completo'
+  confirmPassword: string; 
+  nome_completo: string; 
   telefone?: string;
   cpf?: string;
-  mei?: string; // Novo campo
-  cidade_atuacao?: string; // Novo campo
+  mei?: string; 
+  cidade_atuacao?: string;
 }
 
-const Register: React.FC = () => {
+const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState<PrestadorFormData>({
     email: '',
     password: '',
@@ -50,17 +52,16 @@ const Register: React.FC = () => {
 
     setLoading(true);
 
-    // Separamos os dados de autenticação dos dados de perfil
-    const { email, password, confirmPassword, ...profileData } = formData;
+    const { email, password, nome_completo, ...profileData } = formData;
 
-    // 1. Cria o usuário no sistema de autenticação
+    // CORREÇÃO: Chama supabase.auth.signUp diretamente.
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: profileData.nome_completo,
-          role: 'prestador',
+          full_name: nome_completo,
+          role: 'prestador', // Define a função do usuário
         },
       },
     });
@@ -73,17 +74,16 @@ const Register: React.FC = () => {
 
     if (authData.user) {
       // 2. Insere os dados na tabela 'professionals'
-      // Apenas os campos que existem na tabela são enviados
       const { error: profileError } = await supabase
         .from('professionals')
         .insert({
           id: authData.user.id,
-          nome_completo: profileData.nome_completo,
+          nome_completo: nome_completo, // Usa o nome completo
           telefone: profileData.telefone,
-          // Adicionamos os novos campos aqui
           cpf: profileData.cpf,
           mei: profileData.mei,
           cidade_atuacao: profileData.cidade_atuacao,
+          // Garante que o perfil é criado com os dados mínimos
         });
 
       if (profileError) {
@@ -97,7 +97,8 @@ const Register: React.FC = () => {
 
     setLoading(false);
   };
-
+  
+  // O restante do seu JSX para a UI vai aqui
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
@@ -120,24 +121,51 @@ const Register: React.FC = () => {
             <fieldset className="space-y-6">
               <legend className="text-xl font-semibold text-gray-800">Informações de Login</legend>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
-                  <input type="text" name="nome_completo" value={formData.nome_completo} onChange={handleInputChange} required className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
-                </div>
+                {/* Nome Completo */}
+                <Input
+                  label="Nome Completo"
+                  name="nome_completo"
+                  value={formData.nome_completo}
+                  onChange={handleInputChange}
+                  required
+                  icon={<User className="h-5 w-5 text-gray-400" />}
+                />
+                {/* Email */}
+                <Input
+                  label="Email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  icon={<Mail className="h-5 w-5 text-gray-400" />}
+                />
+                {/* Senha */}
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700">Senha</label>
-                  <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} required className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
+                  <Input
+                    label="Senha"
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required
+                    icon={<Lock className="h-5 w-5 text-gray-400" />}
+                  />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center top-7">
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                {/* Confirmar Senha */}
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700">Confirmar Senha</label>
-                  <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} required className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
+                  <Input
+                    label="Confirmar Senha"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                    icon={<Lock className="h-5 w-5 text-gray-400" />}
+                  />
                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center top-7">
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -149,22 +177,35 @@ const Register: React.FC = () => {
             <fieldset className="space-y-6">
               <legend className="text-xl font-semibold text-gray-800">Dados Adicionais</legend>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Telefone</label>
-                  <input type="tel" name="telefone" value={formData.telefone} onChange={handleInputChange} className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">CPF</label>
-                  <input type="text" name="cpf" value={formData.cpf} onChange={handleInputChange} className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">MEI (Opcional)</label>
-                  <input type="text" name="mei" value={formData.mei} onChange={handleInputChange} className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Cidade de Atuação</label>
-                  <input type="text" name="cidade_atuacao" value={formData.cidade_atuacao} onChange={handleInputChange} className="w-full mt-1 p-3 border border-gray-300 rounded-md shadow-sm" />
-                </div>
+                <Input
+                  label="Telefone"
+                  type="tel"
+                  name="telefone"
+                  value={formData.telefone}
+                  onChange={handleInputChange}
+                  icon={<Phone className="h-5 w-5 text-gray-400" />}
+                />
+                <Input
+                  label="CPF"
+                  name="cpf"
+                  value={formData.cpf}
+                  onChange={handleInputChange}
+                  icon={<FileText className="h-5 w-5 text-gray-400" />}
+                />
+                <Input
+                  label="MEI (Opcional)"
+                  name="mei"
+                  value={formData.mei}
+                  onChange={handleInputChange}
+                  icon={<Briefcase className="h-5 w-5 text-gray-400" />}
+                />
+                <Input
+                  label="Cidade de Atuação"
+                  name="cidade_atuacao"
+                  value={formData.cidade_atuacao}
+                  onChange={handleInputChange}
+                  icon={<MapPin className="h-5 w-5 text-gray-400" />}
+                />
               </div>
             </fieldset>
 
@@ -182,5 +223,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register;
-
+export default RegisterPage;

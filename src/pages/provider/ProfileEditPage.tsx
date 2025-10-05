@@ -4,33 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Loading } from '@/components/Loading';
 import { toast } from 'react-hot-toast';
-
-// Componente para o upload do avatar (pode ser movido para um arquivo separado depois)
-const AvatarUploader = ({ currentAvatarUrl, onUpload }: { currentAvatarUrl: string | null, onUpload: (file: File) => void }) => {
-    const [preview, setPreview] = useState<string | null>(currentAvatarUrl);
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setPreview(URL.createObjectURL(file));
-            onUpload(file);
-        }
-    };
-
-    return (
-        <div className="flex flex-col items-center space-y-4">
-            <img 
-                src={preview || `https://placehold.co/150x150/e2e8f0/4a5568?text=Avatar`} 
-                alt="Avatar" 
-                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md"
-            />
-            <label htmlFor="avatar-upload" className="cursor-pointer bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-300">
-                Trocar Foto
-            </label>
-            <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-        </div>
-    );
-};
+import { Input } from '@/components/Input'; // Importando o Input reutilizável
+import AvatarUploader from '@/components/AvatarUploader'; // Importando o AvatarUploader
 
 
 const ProfileEditPage: React.FC = () => {
@@ -152,14 +127,18 @@ const ProfileEditPage: React.FC = () => {
             {/* Dados Pessoais */}
             <fieldset className="space-y-4">
                 <legend className="text-lg font-semibold text-gray-800 border-b pb-2">Dados Pessoais</legend>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
-                    <input type="text" name="nome_completo" value={formData.nome_completo || ''} onChange={handleInputChange} className="w-full mt-1 p-2 border rounded-md" />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">CPF</label>
-                    <input type="text" name="cpf" value={formData.cpf || ''} onChange={handleInputChange} className="w-full mt-1 p-2 border rounded-md" />
-                </div>
+                <Input
+                    label="Nome Completo"
+                    name="nome_completo"
+                    value={formData.nome_completo || ''}
+                    onChange={handleInputChange}
+                />
+                <Input
+                    label="CPF"
+                    name="cpf"
+                    value={formData.cpf || ''}
+                    onChange={handleInputChange}
+                />
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Bio</label>
                     <textarea name="bio" value={formData.bio || ''} onChange={handleInputChange} className="w-full mt-1 p-2 border rounded-md" rows={4} />
@@ -170,14 +149,18 @@ const ProfileEditPage: React.FC = () => {
             <fieldset className="space-y-4">
                 <legend className="text-lg font-semibold text-gray-800 border-b pb-2">Endereço</legend>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">CEP</label>
-                        <input type="text" name="endereco.cep" value={formData.endereco?.cep || ''} onChange={handleInputChange} className="w-full mt-1 p-2 border rounded-md" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Logradouro</label>
-                        <input type="text" name="endereco.logradouro" value={formData.endereco?.logradouro || ''} onChange={handleInputChange} className="w-full mt-1 p-2 border rounded-md" />
-                    </div>
+                    <Input
+                        label="CEP"
+                        name="endereco.cep"
+                        value={formData.endereco?.cep || ''}
+                        onChange={handleInputChange}
+                    />
+                    <Input
+                        label="Logradouro"
+                        name="endereco.logradouro"
+                        value={formData.endereco?.logradouro || ''}
+                        onChange={handleInputChange}
+                    />
                     {/* Adicionar mais campos de endereço se necessário */}
                 </div>
             </fieldset>
@@ -185,10 +168,12 @@ const ProfileEditPage: React.FC = () => {
             {/* Dados Bancários */}
             <fieldset className="space-y-4">
                 <legend className="text-lg font-semibold text-gray-800 border-b pb-2">Dados Bancários para Recebimento</legend>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Chave PIX</label>
-                    <input type="text" name="dados_bancarios.chave_pix" value={formData.dados_bancarios?.chave_pix || ''} onChange={handleInputChange} className="w-full mt-1 p-2 border rounded-md" />
-                </div>
+                <Input
+                    label="Chave PIX"
+                    name="dados_bancarios.chave_pix"
+                    value={formData.dados_bancarios?.chave_pix || ''}
+                    onChange={handleInputChange}
+                />
                  {/* Adicionar mais campos bancários se necessário */}
             </fieldset>
           </div>

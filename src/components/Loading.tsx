@@ -13,8 +13,10 @@ export const Loading: React.FC<LoadingProps> = ({ message, size = 'md' }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-4">
-      <div className={`animate-spin rounded-full border-t-4 border-b-4 border-gray-900 ${sizeClasses[size]}`}></div>
+    <div role="status" className="flex flex-col items-center justify-center space-y-4">
+      <div className={`animate-spin rounded-full border-t-4 border-b-4 border-gray-900 ${sizeClasses[size]}`}>
+        <span className="sr-only">Loading...</span>
+      </div>
       {message && <p className="text-lg text-gray-700">{message}</p>}
     </div>
   );

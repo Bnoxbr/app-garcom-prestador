@@ -9,7 +9,7 @@ interface AuthContextType {
   loading: boolean;
   role: string | null;
   signIn: (email: string, password: string) => Promise<{ user: User | null; error: AuthError | null }>;
-  signOut: () => Promise<{ error: AuthError | null }>;
+  signOut: () => Promise<{ error: AuthError | null }>; // Certifica que signOut está na interface
 }
 
 // Criamos o contexto
@@ -25,14 +25,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Função auxiliar para buscar a role
   const fetchUserRole = async (userId: string) => {
     try {
-      // Busca a role na tabela 'profiles', que é onde o trigger a armazena
       const { data: profile, error } = await supabase
-        .from('profiles')
+        .from('profiles') 
         .select('role')
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 é 'Não encontrado' - esperado para novos usuários
+      if (error && error.code !== 'PGRST116') { 
           throw error;
       }
       return profile ? profile.role as string : null;
@@ -42,9 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  // Efeito principal para checar a sessão inicial e configurar o listener
   useEffect(() => {
-    // Função para buscar os dados da sessão inicial de forma ROBUSTA
     const getInitialSession = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -55,18 +52,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const userRole = await fetchUserRole(session.user.id);
               setRole(userRole);
             }
-
         } catch (error) {
             console.error("Erro fatal ao carregar a sessão inicial:", error);
         } finally {
-            // ESSENCIAL: Garante que o loading é SEMPRE desativado
             setLoading(false); 
         }
     };
 
     getInitialSession();
 
-    // Ouvinte para mudanças no estado de autenticação (login, logout)
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
@@ -81,37 +75,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Limpeza do ouvinte quando o componente for desmontado
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []); // Roda apenas na montagem
+  }, []); 
 
-  // Função de login
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     return { user: data.user, error };
   };
 
-  // Função de logout
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
   };
 
-  const value = {
-    user,
-    session,
-    loading,
-    role,
-    signIn,
-    signOut,
-  };
+  const value = { user, session, loading, role, signIn, signOut };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Hook customizado para usar o contexto de autenticação
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -119,3 +102,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
