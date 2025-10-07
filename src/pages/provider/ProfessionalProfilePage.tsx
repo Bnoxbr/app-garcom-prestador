@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 // Caminhos corrigidos para usar a forma relativa e garantir a resolução
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { Loading } from '../../components/Loading';
+import Loading from '../../components/Loading';
 import { ArrowLeft, Edit } from 'lucide-react';
 
 // Interface para os dados do perfil principal

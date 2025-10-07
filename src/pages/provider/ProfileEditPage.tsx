@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { Loading } from '@/components/Loading';
 import { toast } from 'react-hot-toast';
-import { Input } from '@/components/Input'; // Importando o Input reutilizável
-import AvatarUploader from '@/components/AvatarUploader'; // Importando o AvatarUploader
+import { Input } from '../../components/Input'; // Importando o Input reutilizável
+import AvatarUploader from '../../components/AvatarUploader'; // Importando o AvatarUploader
+import Loading from '../../components/Loading';
 
 
 const ProfileEditPage: React.FC = () => {

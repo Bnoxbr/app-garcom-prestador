@@ -1,61 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-// Usando caminhos relativos para garantir a consistência
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Loading } from '../components/Loading';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import Loading from '../components/Loading';
+import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
 import { Input } from '../components/Input';
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { signIn, user, loading: authLoading } = useAuth();
+  const { signIn, loading } = useAuth();
   
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Se o usuário já estiver logado, redireciona-o para o dashboard
-  useEffect(() => {
-    if (user && !authLoading) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, authLoading, navigate]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setAuthError(null);
 
-    const { user: loggedInUser, error } = await signIn(formData.email, formData.password);
+    const { error } = await signIn(email, password);
     
     if (error) {
       setAuthError(error.message);
-      setIsSubmitting(false);
-    } else if (loggedInUser) {
-      // SUCESSO! Redireciona para o dashboard.
-      navigate('/dashboard', { replace: true });
-    } else {
-      setAuthError("Ocorreu um erro inesperado. Tente novamente.");
-      setIsSubmitting(false);
     }
+    // O redirecionamento é tratado pelo hook useAuth.
   };
   
-  const isFormValid = formData.email && formData.password;
+  const isFormValid = email && password;
 
-  // Mostra um loading inicial apenas enquanto a sessão é verificada
-  if (authLoading) {
-    return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <Loading message="Carregando..." size="lg" />
-        </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4">
@@ -75,7 +47,7 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8">
-          {isSubmitting ? (
+          {loading ? (
             <Loading message="Verificando..." size="md" />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -86,8 +58,8 @@ const LoginPage: React.FC = () => {
                 type="email"
                 autoComplete="email"
                 required
-                value={formData.email}
-                onChange={handleInputChange}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 icon={<Mail className="h-5 w-5 text-gray-400" />}
               />
@@ -100,8 +72,8 @@ const LoginPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  value={formData.password}
-                  onChange={handleInputChange}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Sua senha"
                   icon={<Lock className="h-5 w-5 text-gray-400" />}
                 />
@@ -120,9 +92,10 @@ const LoginPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={!isFormValid || isSubmitting}
+                disabled={!isFormValid || loading}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
+                <LogIn className="h-5 w-5 mr-2" />
                 Entrar
               </button>
 

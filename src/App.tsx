@@ -1,19 +1,24 @@
+// app.tsx (app-garcom-prestador)
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import ProfessionalProfilePage from '@/pages/provider/ProfessionalProfilePage';
-import RegisterPage from '@/pages/RegisterPage';
-import LoginPage from '@/pages/LoginPage';
-import DashboardPage from '@/pages/provider/DashboardPage';
-import ProfileEditPage from '@/pages/provider/ProfileEditPage';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import AcessoNegadoPage from '@/pages/AcessoNegadoPage'; 
-import { useAuth } from '@/hooks/useAuth';
-import { Loading } from '@/components/Loading';
+import { useAuth } from './hooks/useAuth';
+import Loading from './components/Loading';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/provider/DashboardPage';
+import ProfessionalProfilePage from './pages/provider/ProfessionalProfilePage';
+import ProtectedRoute from './components/ProtectedRoute';
+import AcessoNegadoPage from './pages/AcessoNegadoPage';
+import ProfileEditPage from './pages/provider/ProfileEditPage';
+import AgendaPage from './pages/provider/AgendaPage';
+import OfertaDetalhadaPage from './pages/provider/OfertaDetalhadaPage';
 
-// O componente que agrupa a lógica de roteamento condicional
-function AppContent() {
-  const { user, loading } = useAuth(); 
+// --- NOVA IMPORTAÇÃO ---
+import OportunidadesPage from './pages/provider/OportunidadesPage'; // Importe a nova página
 
-  // 1. Loading Global: Exibe o loading enquanto o estado de autenticação está a ser verificado
+const AppRoutes: React.FC = () => {
+  const { user, loading } = useAuth();
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -24,37 +29,29 @@ function AppContent() {
 
   return (
     <Routes>
-      {/* Rotas Públicas */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/acesso-negado" element={<AcessoNegadoPage />} /> 
-      
-      {/* Rotas Protegidas para Prestadores (usando o Guardião) */}
-      <Route element={<ProtectedRoute />}> 
-        
-        {/* Rota Principal: O Dashboard deve ser a primeira rota protegida. */}
-        {/* CORREÇÃO: Usar o Dashboard como a rota "/" dentro do guardião */}
-        <Route path="/" element={<DashboardPage />} /> 
+      <Route path="/" element={ user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace /> } />
+      <Route path="/login" element={ !user ? <LoginPage /> : <Navigate to="/dashboard" replace /> } />
+      <Route path="/register" element={ !user ? <RegisterPage /> : <Navigate to="/dashboard" replace /> } />
+      <Route path="/unauthorized" element={<AcessoNegadoPage />} />
 
-        <Route path="/dashboard" element={<Navigate to="/" replace />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/agenda" element={<AgendaPage />} />
+        <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route path="/profile/:id" element={<ProfessionalProfilePage />} />
-        <Route path="/profile/edit" element={<ProfileEditPage />} /> 
+        <Route path="/oportunidades/:id" element={<OfertaDetalhadaPage />} />
+        
+        {/* --- NOVA ROTA ADICIONADA AQUI --- */}
+        <Route path="/oportunidades" element={<OportunidadesPage />} /> 
       </Route>
-      
-      {/* CORREÇÃO: A rota root que estava a competir com o ProtectedRoute foi removida. 
-          O ProtectedRoute agora lida com o redirecionamento para o login se não houver usuário. */}
-      
-      {/* Rota Fallback: Redireciona tudo o que não for encontrado para a rota principal protegida. */}
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-}
+};
 
-// O App principal configura o Router
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AppRoutes />
     </Router>
   );
 }

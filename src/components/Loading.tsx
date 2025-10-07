@@ -5,19 +5,21 @@ interface LoadingProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const Loading: React.FC<LoadingProps> = ({ message, size = 'md' }) => {
-  const sizeClasses = {
-    sm: 'h-6 w-6',
-    md: 'h-12 w-12',
-    lg: 'h-24 w-24',
-  };
+const sizeClasses = {
+  sm: 'h-6 w-6',
+  md: 'h-10 w-10',
+  lg: 'h-16 w-16',
+};
 
+const Loading: React.FC<LoadingProps> = ({ message = 'Carregando...', size = 'md' }) => {
   return (
-    <div role="status" className="flex flex-col items-center justify-center space-y-4">
-      <div className={`animate-spin rounded-full border-t-4 border-b-4 border-gray-900 ${sizeClasses[size]}`}>
-        <span className="sr-only">Loading...</span>
-      </div>
-      {message && <p className="text-lg text-gray-700">{message}</p>}
+    <div className="flex flex-col items-center justify-center space-y-4">
+      <div
+        className={`animate-spin rounded-full border-4 border-t-4 border-gray-200 border-t-gray-800 ${sizeClasses[size]}`}
+      ></div>
+      {message && <p className="text-gray-600">{message}</p>}
     </div>
   );
 };
+
+export default Loading;
